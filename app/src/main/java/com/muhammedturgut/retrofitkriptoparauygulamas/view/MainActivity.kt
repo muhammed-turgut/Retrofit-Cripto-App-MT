@@ -14,10 +14,14 @@ import com.muhammedturgut.retrofitkriptoparauygulamas.adapter.RecyclerVİewAdapt
 import com.muhammedturgut.retrofitkriptoparauygulamas.databinding.ActivityMainBinding
 import com.muhammedturgut.retrofitkriptoparauygulamas.model.CryptoModel
 import com.muhammedturgut.retrofitkriptoparauygulamas.servics.CryptoAPI
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.CompositeDisposable
+import io.reactivex.schedulers.Schedulers
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import retrofit2.Retrofit
+import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory
 import retrofit2.converter.gson.GsonConverterFactory
 
 class MainActivity : AppCompatActivity(),RecyclerVİewAdaptere.Listener {
@@ -26,11 +30,16 @@ class MainActivity : AppCompatActivity(),RecyclerVİewAdaptere.Listener {
     private var recyclerViewAdapter:RecyclerVİewAdaptere ?=null
     private lateinit var binding: ActivityMainBinding
 
+    //Disposable (Kullan at)
+
+    private var compositeDisposable:CompositeDisposable ?=null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding=ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        compositeDisposable=CompositeDisposable()
         //RecyclerView
         val layoutManger:RecyclerView.LayoutManager=LinearLayoutManager(this)
         binding.recyclerView.layoutManager=layoutManger
@@ -39,12 +48,20 @@ class MainActivity : AppCompatActivity(),RecyclerVİewAdaptere.Listener {
 
     private fun loadData(){
         val retrofit=Retrofit.Builder().baseUrl(BASE_URL)
-            .addConverterFactory(GsonConverterFactory.create()).build()
+            .addConverterFactory(GsonConverterFactory.create())
+            .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
+            .build().create(CryptoAPI::class.java)
 
+            compositeDisposable?.add(retrofit.getData().subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe(this::handlerRespons))
+
+
+
+
+       /*
         val service=retrofit.create(CryptoAPI::class.java)
         val call =service.getData()
 
-        call.enqueue(object : Callback<List<CryptoModel>> {
+       call.enqueue(object : Callback<List<CryptoModel>> {
             override fun onResponse(
                 call: Call<List<CryptoModel>>,
                 response: Response<List<CryptoModel>>
@@ -59,10 +76,10 @@ class MainActivity : AppCompatActivity(),RecyclerVİewAdaptere.Listener {
                       }
 
 
-                      /*for(cryptoModels:CryptoModel in cryptoModels!!){
+                      for(cryptoModels:CryptoModel in cryptoModels!!){
                          println(cryptoModels.price)
                           println(cryptoModels.currency)
-                      }*/
+                      }
                   }
               }
             }
@@ -72,9 +89,26 @@ class MainActivity : AppCompatActivity(),RecyclerVİewAdaptere.Listener {
                 t.printStackTrace()
             }
         })
+        */
+
+    }
+    private fun handlerRespons(cryptoList: List<CryptoModel>){
+        cryptoModels=ArrayList(cryptoList)
+
+        cryptoModels?.let {
+            recyclerViewAdapter=RecyclerVİewAdaptere(it, this@MainActivity)
+            binding.recyclerView.adapter=recyclerViewAdapter
+        }
     }
 
     override fun onItemClick(cryptoModel: CryptoModel) {
         Toast.makeText(this@MainActivity,"Cliced: ${cryptoModel.currency}",Toast.LENGTH_SHORT).show()
+    }
+
+    override fun onDestroy() {
+        //Bu activite sonlanınca yapılacakları yapıyor.
+        super.onDestroy()
+        //
+        compositeDisposable?.clear()
     }
 }
