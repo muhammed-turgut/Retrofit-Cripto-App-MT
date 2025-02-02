@@ -17,6 +17,9 @@ import com.muhammedturgut.retrofitkriptoparauygulamas.servics.CryptoAPI
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -46,15 +49,13 @@ class MainActivity : AppCompatActivity(),RecyclerVİewAdaptere.Listener {
         loadData()
     }
 
-    private fun loadData(){
-        val retrofit=Retrofit.Builder().baseUrl(BASE_URL)
-            .addConverterFactory(GsonConverterFactory.create())
-            .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
-            .build().create(CryptoAPI::class.java)
+    private fun loadData() {
+            val retrofit=Retrofit.Builder().baseUrl(BASE_URL)
+                .addConverterFactory(GsonConverterFactory.create())
+                .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
+                .build().create(CryptoAPI::class.java)
 
             compositeDisposable?.add(retrofit.getData().subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe(this::handlerRespons))
-
-
 
 
        /*
@@ -101,8 +102,8 @@ class MainActivity : AppCompatActivity(),RecyclerVİewAdaptere.Listener {
         }
     }
 
-    override fun onItemClick(cryptoModel: CryptoModel) {
-        Toast.makeText(this@MainActivity,"Cliced: ${cryptoModel.currency}",Toast.LENGTH_SHORT).show()
+    override fun onItemClick(cryptoModel: CryptoModel){
+            Toast.makeText(this@MainActivity,"Cliced: ${cryptoModel.currency}",Toast.LENGTH_SHORT).show()
     }
 
     override fun onDestroy() {
